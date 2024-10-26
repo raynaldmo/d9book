@@ -13,21 +13,6 @@ export default defineConfig({
   lastUpdated: true,
   head: [
     ['link', { rel: 'icon', href: '/images/favicon.ico' }],
-    [
-      'script',
-      {
-        async: '',
-        src: 'https://www.googletagmanager.com/gtag/js?id=G-8V22RQEJ71',
-      },
-    ],
-    [
-      'script',
-      {},
-      `window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-8V22RQEJ71');`,
-    ],
   ],
   //rewrites: {
   //'nodes_n_fields.md': 'nodes-and-fields.md',
@@ -35,6 +20,7 @@ export default defineConfig({
   //},
 
   vite: {
+    envDir: './../',
     ssr: {
       noExternal: ['@nolebase/vitepress-plugin-enhanced-readabilities'],
     },
