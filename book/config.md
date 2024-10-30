@@ -16,6 +16,11 @@ $settings['config_sync_directory'] = '../config/sync';
 ```
 You can override config items in a `settings.php` or `settings.local.php` using the `$config` global variable.
 
+::: tip Note
+Blocks are content entities, but the *placement* of blocks are configuration entities.
+:::
+
+
 [More on configuration Management on Drupal.org.](https://www.drupal.org/docs/configuration-management)
 
 

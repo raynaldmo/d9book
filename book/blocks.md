@@ -7,9 +7,9 @@ title: Blocks
 
 ## Overview
 
-Blocks are [plugins](https://www.drupal.org/docs/drupal-apis/plugin-api/plugin-api-overview), which are reusable pieces of code following design patterns. Plugins are also used to define views arguments, field formatters, field widgets, etc. The source files for blocks are found in each module's `/src/Plugin` directory. 
+Drupal Blocks are useful `building blocks` for putting useful info in various places on your site. They can be controlled in many different ways including limited to a specific page, only displayed for users with a specific role or they can even show different data depending on the user e.g. a list of upcoming events that you have RSVP'd to. 
 
-![Location of block source files](/images/image-block-location.png)
+Technically, they are `plugins`. See [Plugin API Overview on Drupal.org updated Mar 2021](https://www.drupal.org/docs/drupal-apis/plugin-api/plugin-api-overview) for more.
 
 ::: tip Note
 Blocks are content entities, but the *placement* of blocks are configuration entities.
@@ -1158,6 +1158,16 @@ Check out the other Blocks in that same directory for more examples.
 
 
 ## The basics
+
+### Plugins and blocks
+
+Blocks are [plugins](https://www.drupal.org/docs/drupal-apis/plugin-api/plugin-api-overview), which are reusable pieces of code following design patterns. Plugins are also used to define views arguments, field formatters, field widgets, etc. The source files for blocks are found in each module's `/src/Plugin` directory. 
+
+![Location of block source files](/images/image-block-location.png)
+
+::: tip Note
+Blocks are content entities, but the *placement* of blocks are configuration entities.
+:::
 
 ### A simple block
 
