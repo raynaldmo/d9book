@@ -7,13 +7,12 @@ title: Blocks
 
 ## Overview
 
-Blocks are [plugins](https://www.drupal.org/docs/drupal-apis/plugin-api/plugin-api-overview), which are reusable pieces of code following design patterns. Plugins are also used to define views arguments, field formatters, field widgets, etc. The source files for blocks are found in each module's `/src/Plugin` directory. Note that blocks are content entities, but the *placement* of blocks are configuration entities.
+Blocks are [plugins](https://www.drupal.org/docs/drupal-apis/plugin-api/plugin-api-overview), which are reusable pieces of code following design patterns. Plugins are also used to define views arguments, field formatters, field widgets, etc. The source files for blocks are found in each module's `/src/Plugin` directory. 
 
 ![Location of block source files](/images/image-block-location.png)
 
-::: tip More links
-- [Plugin API overview](https://www.drupal.org/docs/drupal-apis/plugin-api/plugin-api-overview)
-- [Annotations-based plugins](https://www.drupal.org/docs/8/api/plugin-api/annotations-based-plugins)
+::: tip Note
+Blocks are content entities, but the *placement* of blocks are configuration entities.
 :::
 
 ## Create a block with Drush generate
@@ -1039,8 +1038,168 @@ The block module provides the following hooks:
 
 More at [block api documentation on Drupal.org](https://api.drupal.org/api/drupal/core%21modules%21block%21block.api.php/10)
 
+## Annotations vs PHP Attributes
+As of PHP 8.1, the PHP has native support for attributes that are compatible with Drupal’s plugin system. Consequently, Drupal will transition from the use of annotations to PHP attributes, to supply metadata and configuration for plugins. Drupal currently supports both annotations and attributes
+
+The ability to use attributes for plugins was first introduced in Drupal 10.2.0. At a minimum, any code using attributes will have to be in a Drupal 10.2+ project.
+
+
+Read more at the [PHP Attributes for Drupal Plugins at Drupalize.me - Feb 2024 ](https://drupalize.me/blog/php-attributes-drupal-plugins)  Also see the [Attributes overview on php.net](https://www.php.net/manual/en/language.attributes.overview.php).
+
+
+Here is a simple block plugin which uses annotations:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\block_play\Plugin\Block;
+
+use Drupal\Core\Block\BlockBase;
+
+/**
+ * Provides a test block 3 block.
+ *
+ * @Block(
+ *   id = "block_play_test_block_3",
+ *   admin_label = @Translation("Test Block 3"),
+ *   category = @Translation("Custom"),
+ * )
+ */
+final class TestBlock3Block extends BlockBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function build(): array {
+    $build['content'] = [
+      '#markup' => $this->t('It works!'),
+    ];
+    return $build;
+  }
+
+}
+```
+
+Here is the same block plugin using PHP attributes:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\block_play\Plugin\Block;
+
+use Drupal\Core\Block\BlockBase;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
+
+/**
+ * Provides a test block 3 block.
+ */
+#[Block(
+  id: "block_play_test_block_3",
+  admin_label: new TranslatableMarkup("Test Block 3"),
+  category: new TranslatableMarkup("Custom")
+)]
+final class TestBlock3Block extends BlockBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function build(): array {
+    $build['content'] = [
+      '#markup' => $this->t('It works!'),
+    ];
+    return $build;
+  }
+
+}
+```
+
+
+
+
+::: tip Note
+You must have: `use Drupal\Core\StringTranslation\TranslatableMarkup;` and use that instead of `@Translation` in the annotation.
+:::
+
+You can see an example of this in the [Drupal core system branding block](https://git.drupalcode.org/project/drupal/-/blob/11.x/core/modules/system/src/Plugin/Block/SystemBrandingBlock.php?ref_type=heads) plugin at `core/modules/system/src/Plugin/Block/SystemBrandingBlock.php`.  
+
+```php
+/**
+ * Provides a block to display 'Site branding' elements.
+ */
+#[Block(
+  id: "system_branding_block",
+  admin_label: new TranslatableMarkup("Site branding"),
+  forms: ['settings_tray' => SystemBrandingOffCanvasForm::class]
+)]
+class SystemBrandingBlock extends BlockBase implements ContainerFactoryPluginInterface {
+...
+```
+
+Also in [Drupal core system breadcrumb block](https://git.drupalcode.org/project/drupal/-/blob/11.x/core/modules/system/src/Plugin/Block/SystemBreadcrumbBlock.php?ref_type=heads) plugin at `core/modules/system/src/Plugin/Block/SystemBreadcrumbBlock.php`:
+
+```php
+/**
+ * Provides a block to display the breadcrumbs.
+ */
+#[Block(
+  id: "system_breadcrumb_block",
+  admin_label: new TranslatableMarkup("Breadcrumbs")
+)]
+class SystemBreadcrumbBlock extends BlockBase implements ContainerFactoryPluginInterface {
+  ...
+```
+Check out the other Blocks in that same directory for more examples.
+
+
+
 
 ## The basics
+
+### A simple block
+
+Using `drush generate plugin:block` I generated a simple block at `web/modules/custom/block_play/src/Plugin/Block/TestBlock3Block.php`. I called this block `Test Block 3` and gave it a machine name of `block_play_test_block_3`.  (The module name is `block_play`.) Placing this block via the Drupal user interface will display the text "It works!". The file generated looks like:
+
+```php
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\block_play\Plugin\Block;
+
+use Drupal\Core\Block\BlockBase;
+
+/**
+ * Provides a test block 3 block.
+ *
+ * @Block(
+ *   id = "block_play_test_block_3",
+ *   admin_label = @Translation("Test Block 3"),
+ *   category = @Translation("Custom"),
+ * )
+ */
+final class TestBlock3Block extends BlockBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function build(): array {
+    $build['content'] = [
+      '#markup' => $this->t('It works!'),
+    ];
+    return $build;
+  }
+
+}
+```
+
+
+
+
+
 
 ### Anatomy of a custom block with dependency injection
 
@@ -1315,7 +1474,7 @@ final class FaxBlock extends BlockBase implements ContainerFactoryPluginInterfac
 
 
 ## Resources
-
+- [Annotations-based plugins on Drupal.org updated Aug 2024](https://www.drupal.org/docs/8/api/plugin-api/annotations-based-plugins)
 - [Drupal blocks in the user interface on Drupal.org updated Aug 2024](https://www.drupal.org/docs/user_guide/en/block-concept.html)
 - [Block API overview on Drupal.org updated July 2024](https://www.drupal.org/docs/drupal-apis/block-api/block-api-overview)
 - [Plugin API overview on Drupal.org updated Mar 2021](https://www.drupal.org/docs/drupal-apis/plugin-api/plugin-api-overview)

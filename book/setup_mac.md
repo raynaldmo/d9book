@@ -364,7 +364,7 @@ This is already implemented in the `.gitconfig` file above.
 
 In your $HOME directory, create the .gitignore_global file.
 
-```gitignore
+```
 # Borrowed from https://gist.github.com/octocat/9257657
 # Vim patterns from https://github.com/github/gitignore
 
