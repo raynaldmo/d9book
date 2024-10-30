@@ -1039,10 +1039,9 @@ The block module provides the following hooks:
 More at [block api documentation on Drupal.org](https://api.drupal.org/api/drupal/core%21modules%21block%21block.api.php/10)
 
 ## Annotations vs PHP Attributes
-As of PHP 8.1, the PHP has native support for attributes that are compatible with Drupal’s plugin system. Consequently, Drupal will transition from the use of annotations to PHP attributes, to supply metadata and configuration for plugins. Drupal currently supports both annotations and attributes
+As of version 8.1, PHP has native support for attributes that are compatible with Drupal’s `plugin` system. Consequently, Drupal will transition from the use of annotations to PHP attributes, to supply metadata and configuration for plugins. Drupal currently supports both annotations and attributes.
 
-The ability to use attributes for plugins was first introduced in Drupal 10.2.0. At a minimum, any code using attributes will have to be in a Drupal 10.2+ project.
-
+The ability to use attributes for plugins was first introduced in Drupal 10.2.0 so any code using attributes will have to be in a Drupal 10.2 or later project.
 
 Read more at the [PHP Attributes for Drupal Plugins at Drupalize.me - Feb 2024 ](https://drupalize.me/blog/php-attributes-drupal-plugins)  Also see the [Attributes overview on php.net](https://www.php.net/manual/en/language.attributes.overview.php).
 
@@ -1121,7 +1120,7 @@ final class TestBlock3Block extends BlockBase {
 
 
 ::: tip Note
-You must have: `use Drupal\Core\StringTranslation\TranslatableMarkup;` and use that instead of `@Translation` in the annotation.
+You must have: `use Drupal\Core\StringTranslation\TranslatableMarkup;` and use that instead of `@Translation` in the attribute.
 :::
 
 You can see an example of this in the [Drupal core system branding block](https://git.drupalcode.org/project/drupal/-/blob/11.x/core/modules/system/src/Plugin/Block/SystemBrandingBlock.php?ref_type=heads) plugin at `core/modules/system/src/Plugin/Block/SystemBrandingBlock.php`.  
