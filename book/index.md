@@ -24,6 +24,12 @@ features:
     details: Use the Drupal core Actions module to control Drupal
     link: /actions
 
+  - icon: 🤯
+    title: Artificial Intelligence
+    details: Dig into the world of AI and Drupal
+    link: /ai
+
+
   - icon: 🪣
     title: AJAX
     details: Why refresh the page when you can use the built-in AJAX functionality
@@ -68,6 +74,12 @@ features:
     title: Debugging
     details: Debugging with PhpStorm, DDEV and Xdebug
     link: /debugging
+
+  - icon: 💔
+    title: Decoupled Drupal
+    details: REST API, GraphQL, JSONAPI
+    link: /decoupled
+
 
   - icon: 👩‍💻
     title: Development
