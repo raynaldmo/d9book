@@ -12,7 +12,7 @@ Setting up your Mac for development is a highly personal process. Everyone has t
 
 ## Better start with these
 
-### Display files that start with <kbd>.</kbd>
+### Display files that start with <kbd>.</kbd>(period or full stop)
 
 In order to display files that start with a `.` (which are usually hidden) in the finder:
 
