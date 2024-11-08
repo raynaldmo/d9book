@@ -105,10 +105,10 @@ The [Content AI module](https://www.drupal.org/project/contentai) is also tied t
 
 ## Implementing RAG
 
-These instructions apply to using the [Milvus VDB Provider](https://milvus.io/) which is also referred to as the `Milvus/Zilliz VDB Provider` in the `extend` listing in Drupal.
+For more info on RAG, see the definition of the [RAG term](#rag) below. 
 
 ::: tip Note
-You can apply most of these instructions to using a local setup of the [Pinecone](https://www.pinecone.io/) provider as well. Watch [Scott Euser\'s video presentation](https://youtu.be/WZEh4JOGhhM?si=89Kb1sPi88YKPsCr&t=4001) for more details.
+These instructions apply to using the [Milvus VDB Provider](https://milvus.io/) which is also referred to as the `Milvus/Zilliz VDB Provider` in the `extend` listing in Drupal. You can apply most of these instructions to using a local setup of the [Pinecone](https://www.pinecone.io/) provider as well. Watch [Scott Euser\'s video presentation](https://youtu.be/WZEh4JOGhhM?si=89Kb1sPi88YKPsCr&t=4001) for more details.
 :::
 
 
@@ -223,11 +223,20 @@ See the screen shot below for what it should look like:
 
 
 
+### Check your work
+
+You need to make sure the content will be submitted to the VDB correctly.  To test this, you can use the `Preview content to be vectorized` section at `https://ddev103.ddev.site/admin/config/search/search-api/index/content/fields`.  
+
+![Preview content](/images/preview-content1.png)
+
+Type in part of a title for your content.  I used `green bean` and it found the `Green Bean Bonanza: 3 delicious dishes to savor` node.  After clicking the node title, it showed the node had been broken up into 4 chunks (ID `8:en0`, `8:en1`, `8:en2`, `8:en3`) and each chunk was displayed along with the contextual fields:
+
+![chunk1](/images/vdb-chunk1.png)
+
+And here is the ![second chunk](/images/vdb-chunk2.png)
 
 
-#### Check your work
-
-At `https://ddev103.ddev.site/admin/config/search/search-api/index/content`, use the u/i to index the content.  You will need to have some content to index.  I used ChatGPT to generate some blog articles so I had 8 nodes to index. Afterwards, the index status should show 100% and in my case `8/8 indexed`.
+At `https://ddev103.ddev.site/admin/config/search/search-api/index/content`, use the u/i to index the content.  You will need to have some content to index.  I used ChatGPT to generate some articles so I had 8 nodes to index. Afterwards, the index status should show 100% and in my case `8/8 indexed`.
 
 In the browser, navigate to [https://ddev103.ddev.site:8521/](https://ddev103.ddev.site:8521) as before, click on the `db1` database. You should see a list of collections.  Check the `Approx Count` column to see if your content has been indexed.  It needs to be greater than zero:  
 
@@ -237,9 +246,57 @@ In the browser, navigate to [https://ddev103.ddev.site:8521/](https://ddev103.dd
 
 ### Altering the query to Boost AI results
 
-This is a technique to modify the search query to customize the results.  I've seen this used to boost results e.g. make the results which are type `staff` appear earlier in the results set.  See an [example and explanation in the general section](general#enhance-the-relevance-of-solr-search-results)
+This is a technique to modify the search query to customize the results.  This is required for RAG so that the AI results are boosted in the search results to appear first.
 
-In the AI module, you can see in `web/modules/contrib/ai/modules/ai_search/src/EventSubscriber/SolrBoostByAiSearchEventSubscriber.php`, in the `onPostConvertedQuery()` function, the query is altered to boost AI results.
+I've seen this technique used to boost results in other cases, e.g. to make the results which are type `staff` appear earlier in the results set.  See an [example and explanation in the general section](general#enhance-the-relevance-of-solr-search-results)
+
+
+In the AI module in `web/modules/contrib/ai/modules/ai_search/src/Plugin/search_api/processor/SolrBoostByAiSearch.php`, the description explains that AI Search results will be inserted into the database search results:
+
+```php
+/**
+ * Prepend AI Search results into the database search..
+ *
+ * @SearchApiProcessor(
+ *   id = "solr_boost_by_ai_search",
+ *   label = @Translation("Boost SOLR by AI Search"),
+ *   description = @Translation("Prepend results from the AI Search into the SOLR results ready for subsequent filtering (if any) to improve relevance."),
+ *   stages = {
+ *     "preprocess_query" = 0,
+ *   }
+ * )
+ */
+```
+
+
+
+The `preprocessSearchQuery()` method is responsible for modifying the search query before it is executed. It checks if there are search terms and, if so, retrieves AI search results. These results are then added as tags to the query to be processed below.
+
+```php
+  /**
+   * {@inheritdoc}
+   */
+  public function preprocessSearchQuery(QueryInterface $query) {
+    parent::preprocessSearchQuery($query);
+
+    // Only do something if we have search terms. It is possible that the
+    // index is being filtered only without any terms, in which case we have
+    // nothing more to do.
+    if ($query_string_keys = $query->getKeys()) {
+      $ai_results = $this->getAiSearchResults($query_string_keys);
+      if ($ai_results) {
+
+        // This gets passed via the SolrBoostByAiSearchEventSubscriber class
+        // back to the queryAlter() method.
+        $query->setOption('ai_search_ids', $ai_results);
+      }
+    }
+  }
+```
+
+
+Later, in `web/modules/contrib/ai/modules/ai_search/src/EventSubscriber/SolrBoostByAiSearchEventSubscriber.php`, in the `onPostConvertedQuery()` method, an event is fired to alter the query is altered and boost the AI results:
+
 
 ```php
   /**
@@ -255,7 +312,8 @@ In the AI module, you can see in `web/modules/contrib/ai/modules/ai_search/src/E
   }
 ```
 
-Here is the `queryAlter()` function in the `SolrBoostByAiSearch` class:
+
+Here is the `queryAlter()` method in the `web/modules/contrib/ai/modules/ai_search/src/Plugin/search_api/processor/SolrBoostByAiSearch.php` class that is called from the code above. The `queryAlter()` static method alters the database query by extracting entity IDs from the query tags and modifies the query to boost the AI result entity IDs. It adds an expression to the query to prioritize these IDs and adjusts the `order by` clause to ensure AI results appear first.:
 
 ```php
   /**
@@ -291,21 +349,33 @@ Here is the `queryAlter()` function in the `SolrBoostByAiSearch` class:
 
 
 
-There is code which uses the **now deprecated** `hook_search_api_solr_query_alter()` to alter the query in `web/modules/contrib/ai/modules/ai_search/ai_search.module` and `web/modules/contrib/ai/modules/ai_search/src/Plugin/search_api/processor/DatabaseBoostByAiSearch.php`. Sadly this means it won't work.  It needs to be converted to use the event subscriber as described in [How to replace the deprecated hook hook_search_api_solr_query_alter with PreQueryEvent on drupal.org - updated Apr 2024](https://www.drupal.org/docs/8/modules/search-api-solr/search-api-solr-howtos/how-to-replace-the-deprecated-hook-hook_search_api_solr_query_alter-with-prequeryevent)
+There is also code which uses the **now deprecated** `hook_search_api_solr_query_alter()` to alter the query in `web/modules/contrib/ai/modules/ai_search/ai_search.module` and `web/modules/contrib/ai/modules/ai_search/src/Plugin/search_api/processor/DatabaseBoostByAiSearch.php`. Sadly this means it won't work for Drupal 10. I suspect it will be removed.  It needs to be converted to use the event subscriber as described in [How to replace the deprecated hook hook_search_api_solr_query_alter with PreQueryEvent on drupal.org - updated Apr 2024](https://www.drupal.org/docs/8/modules/search-api-solr/search-api-solr-howtos/how-to-replace-the-deprecated-hook-hook_search_api_solr_query_alter-with-prequeryevent). It is interesting and perhaps useful to look at.
 
 The `preprocessSearchQuery` method in the `DatabaseBoostByAiSearch` class is responsible for modifying the search query to include AI-boosted results. It first checks if there are search terms in the query. If search terms exist, it retrieves AI search results using these terms. If AI results are found, it adds specific tags to the query, including `database_boost_by_ai_search` and `ai_search_ids` with the **IDs of the AI-boosted** entities. This tagging is used later to alter the database query to **prioritize these AI-boosted results**.
 
 
 ### Searching
 
-To actually do the searching, you have to use the AI Vector DB Explorer.  I found this at `https://ddev103.ddev.site/admin/config/ai/explorers/vector-db-search`. When I put in a prompt, I got an error that `Method embeddings does not exist on provider groq`. 
+To actually do the searching, you have to use the AI Vector DB Explorer.  I found this at `https://ddev103.ddev.site/admin/config/ai/explorers/vector-db-search`. 
 
-Changing the provider from `groq` to something else is not clear. 
 
-From [this reddit.com discussion](https://www.reddit.com/r/drupal/comments/1fxriuh/rag_for_massive_drupal_codebases_2040m_tokens/): 
-```
-Check out the AI module, or more specifically the search submodule. I expect you want to index your content as vectors in a suitable database and then retrieve relevant items to feed into your prompt.
-```
+I tested by providing the prompt: `are there any green bean related products referenced in the posts? and it responded with some results that showed recipes that included `green bean` in the title.  The same search where I used the french word for green beans: `are there any haricot verts related products referenced in the posts?` gave me results with green beans in the title and recipes. The AI doesn't seem to care what language, it apparently has indexed the `idea` of green beans and can find it regardless of the language.  This is pretty impressive.  I even tried it using `are there judías verdes referenced in the posts?` which is the spanish version and it worked great!
+
+
+
+![Searching for green beans](/images/haricot-verts.png)
+
+
+A simple site search at https://ddev103.ddev.site/search/node?keys=haricot%20verts for the french term `haricot verts` returned no results.  This is a good example of how the AI search is superior to the normal search.  AI search is able to understand the context of the content and provide relevant results whereas the normal search is just looking for the exact term in the content.
+
+![Normal search for green beans](/images/haricot-verts2.png)
+
+
+In some of my earlier, exploration, when I put in a prompt, I got an error that `Method embeddings does not exist on provider groq`. I think the problem was that I had configured the `groq` provider to handle the embeddings which it doesn't do.  When I later changed it to use the `OpenAI` provider it worked fine.
+
+
+
+
 
 
 ## API keys
@@ -325,21 +395,21 @@ From [this nvidia blog post from Nov 2023](https://blogs.nvidia.com/blog/what-is
 
 In other words, it fills a gap in how LLMs work. Under the hood, LLMs are neural networks, typically measured by how many parameters they contain. An LLM’s parameters essentially represent the general patterns of how humans use words to form sentences.
 
+I did some testing by asking questions of my site such as: `Is there anything about floating around in the ocean on fiberglass boards?` and it showed me articles about surfing.  I could also reference words in other languages which the AI could easily translate and find the relevant content.
+
+
 ### Vector Database
 
-A vector database (VDB) is a type of database that stores data as mathematical representations, or vectors, to manage and search for unstructured and semi-structured data
+A vector database (VDB) is a type of database that stores data as mathematical representations, or vectors, to manage and search for unstructured and semi-structured data. It keeps track of the relationships between data points, including their similarities.
 
 Vector databases make it easier for machine learning models to remember previous inputs, allowing machine learning to be used to power search, recommendations, and text generation use-cases. Data can be identified based on similarity metrics instead of exact matches, making it possible for a computer model to understand data contextually. More at [this Cloudflare article](https://www.cloudflare.com/learning/ai/what-is-vector-database/)
 
-Examples of vector database products. Some can be hosted locally, others are cloud-based:
-- Milvus
-- Zilliz
+Examples of vector database products. Some can be hosted locally or are offered as a service:
+- [Milvus](https://milvus.io/)
+- [Zilliz](https://zilliz.com/)
 - [ChromaDB](https://github.com/chroma-core/chroma
-- Pinecone
+- [Pinecone](https://www.pinecone.io/)
  
- ## Resources
- - [Drupal Slack #ai channel](https://www.drupal.org/community/contributor-guide/reference-information/talk/tools/slack)
- - [Drupal AI Online Meetup #2](https://www.drupal.org/project/ai/issues/3478581). This contains the link to the youtube presentation by Scott Euser (Soapbox).
 
 
 
@@ -350,4 +420,10 @@ Examples of vector database products. Some can be hosted locally, others are clo
 - check out [Build Smart Drupal Chatbots with RAG Integration and Ollama by Akansha Saxena Jul 2024](https://akanshasaxena.com/post/drupal-rag-integration/)
 - check out [Using RAG to Talk to Drupal Site Content](https://spinspire.com/projects/using-rag-talk-drupal-site-content). This looks like the blueprint for Akansha's article.
 - check out this [Apply RAG, OpenAI integrations and interpolation - Frederik Wouters video](https://drupal.tv/external-video/2024-06-25/apply-rag-openai-integrations-and-interpolation-frederik-wouters) - Audio is very bad..
+
+
+ ## Resources
+ - [Drupal Slack #ai channel](https://www.drupal.org/community/contributor-guide/reference-information/talk/tools/slack)
+ - [Drupal AI Online Meetup #2](https://www.drupal.org/project/ai/issues/3478581). This contains the link to the youtube presentation by Scott Euser (Soapbox).
+
 
