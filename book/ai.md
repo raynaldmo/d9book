@@ -407,7 +407,7 @@ Vector databases make it easier for machine learning models to remember previous
 Examples of vector database products. Some can be hosted locally or are offered as a service:
 - [Milvus](https://milvus.io/)
 - [Zilliz](https://zilliz.com/)
-- [ChromaDB](https://github.com/chroma-core/chroma
+- [ChromaDB](https://github.com/chroma-core/chroma)
 - [Pinecone](https://www.pinecone.io/)
  
 
