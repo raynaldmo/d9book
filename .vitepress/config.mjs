@@ -24,6 +24,9 @@ export default defineConfig({
     ssr: {
       noExternal: ['@nolebase/vitepress-plugin-enhanced-readabilities'],
     },
+    build: {
+      chunkSizeWarningLimit: 1500,
+    },
   },
   themeConfig: {
     logo: '/images/d9book.svg',
