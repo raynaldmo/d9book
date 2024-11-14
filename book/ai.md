@@ -221,7 +221,7 @@ See the screen shot below for what it should look like:
 
 ![Manage fields for search index Content](/images/milvus-search-index.png)
 
-
+It would be useful to also add an abstract or summary to the indexed field and specify it as `Contextual content` to further help the AI understand the context of the content.
 
 ### Check your work
 
