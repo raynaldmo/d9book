@@ -456,6 +456,55 @@ If you’re using SMTP for outgoing mail—with Symfony Mailer or SMTP modules, 
 [Read more in the DDEV docs](https://ddev.readthedocs.io/en/latest/users/usage/developer-tools/#email-capture-and-review-mailpit)
 
 
+### Solr
+
+Many sites require Solr for search. You can add Solr to your DDEV project but it has some complexities.  Here is a way to get it set up.
+
+```sh
+ddev get ddev/ddev-solr
+ddev restart
+```
+
+To use the latest version of solr (currently ver 9.x), you should add a `.ddev/docker-compose.solr_extra.yml` to override the image: 
+  
+```yaml
+services: 
+  solr:
+    image: solr:9
+```
+
+You will need to restart the project with `ddev restart` to see the changes.
+
+
+Once up and running, access Solr's admin UI within your browser by opening `https://<projectname>.ddev.site:8943`. For example, if the project is named \"myproject\" the hostname will be `https://myproject.ddev.site:8943`.
+
+![Solr Dashboard](/images/solr-dash.png)
+
+The admin UI is protected by basic authentication. The preconfigured admin account in security.json is user `solr` using the password `SolrRocks`.
+
+To access the Solr container from DDEV's web container, use `http://solr:8983`. 
+
+::: tip Note
+Don't use `localhost` for the name of the solr server in your search api configuration. Use `solr` instead.
+:::
+
+
+More at the [ddev-solr repo](https://github.com/ddev/ddev-solr)
+
+
+DDEV provides some command line tools to help you manage your Solr instance. You can see the available commands by running `ddev solr`:
+
+```sh
+ddev solr
+Usage: solr COMMAND OPTIONS
+       where COMMAND is one of: start, stop, restart, status, healthcheck, create, create_core, create_collection, delete, version, zk, auth, assert, config, export, api, package, post, postlogs
+```
+
+solr uses a program called `zookeeper` to manage some of the configuration of the solr server. 
+
+To access solr data, use the [Search API solr module](https://www.drupal.org/project/search_api_solr) along with the [Search API module](https://www.drupal.org/project/search_api).
+
+
 
 ### DDEV and Xdebug
 
@@ -760,6 +809,96 @@ To fix, `ddev remove --remove-data`, then `ddev start`. This may fail and sugges
 ```sh
 ddev stop --remove-data --omit-snapshot
 ```
+
+
+## Local Solr setup with Search API Solr
+
+Follow these [steps to get solr installed with your ddev project](#solr) first. 
+
+Solr Cloud is the \"modern\" way to run Solr.  There are other ways, but this is the setup we'll cover here.
+
+Starting from Search API Solr module version 4.2.1 you don't need to deal with configsets manually anymore. You can enable the `search_api_solr_admin` sub-module which is part of the [Search API Solr module](https://www.drupal.org/project/search_api_solr). Now you create or update your "collections" at any time by clicking the "Upload Configset" button on the Search API server details page (see installation steps below), or use drush to do this with
+
+
+```sh
+ddev drush --numShards=1 search-api-solr:upload-configset SEARCH_API_SERVER_ID
+```
+
+### Add a Search API server
+
+At `/admin/config/search/search-api` click on the "Add server" button.
+
+Name your server (for example, I called it `ddev` in the image below) and specify `solr`, not Acquia Search Solr
+
+![Add server1](/images/solr-server1.png)
+
+Specify `Solr Cloud with Basic Auth` so you can use the `solr` user and password `SolrRocks`.
+
+![Add server2](/images/solr-server2.png)
+
+
+Specify the Solr node name: `solr`. Be sure to not use `localhost` as the server name. You will need to also specify a `Default Solr collection`.  I used `selwyn` as the collection name.
+
+![Add server3](/images/solr-server3.png)
+
+To tell Search API to use version 9 of Solr, specify `9.x` in the `Solr version override` field.
+
+![Add server4](/images/solr-server4.png)
+
+
+Don't change any of the Advanced server configuration settings:
+
+![Add server5](/images/solr-server5.png)
+
+
+Specify `solr` as the Solr host context and put the `solr` user and password `SolrRocks` in the `Username` and `Password fields.
+
+![Add server6](/images/solr-server6.png)
+
+Leave the default values for Advanced and Multi-site compatibility:
+
+![Add server - Advanced and multi-site compatibility](/images/solr-server7.png)
+
+
+### Install schema
+
+You can do this in different ways.  I used the `+ Get config.zip` button from the view server page at `/admin/config/search/search-api/server/ddev` to download a `config.zip` file. I copied the unzipped files into `.ddev\solr\configsets\selwyn`.  
+![Solr get config.zip](/images/solr-get-config.png)
+
+These were my files:
+```
+accents_en.txt                   protwords_en.txt                 schema_extra_fields.xml          solrconfig_extra.xml             solrconfig_requestdispatcher.xml stopwords_und.txt
+accents_und.txt                  protwords_und.txt                schema_extra_types.xml           solrconfig_index.xml             solrcore.properties              synonyms_en.txt
+elevate.xml                      schema.xml                       solrconfig.xml                   solrconfig_query.xml             stopwords_en.txt                 synonyms_und.txt
+```
+
+
+Restarting ddev with `ddev restart` will make the new schema available to the solr server.
+It looks like you can also may also be able to use the `+Upload Configset` button on the server page also. (See the image above.)
+
+It seems like if you use a different directory name to copy the unzipped `config.zip` file i.e. use `fred` instead of `selwyn` DDEV will create a collection called `fred`. In the solr, ui, you should be able to see the collection name in the left-hand column.
+
+![Solr collections](/images/solr-collection-selwyn.png)
+
+
+
+
+### Add a Search API index
+
+At `/admin/config/search/search-api` click on the "Add index" button.
+
+
+Specify `Content` as the data source and the Bundles that you want indexed.  
+Specify the languages.
+For the server, specify the server you created above. In our example, it is `ddev`.
+
+![Add index1](/images/searchapi-index1.png)
+
+You 
+
+More at [Search API Solr module README](https://git.drupalcode.org/project/search_api_solr/-/blob/4.x/README.md)
+
+
 
 ## PHPStorm and Drupal
 
