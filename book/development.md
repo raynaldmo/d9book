@@ -865,19 +865,22 @@ Leave the default values for Advanced and Multi-site compatibility:
 
 ### Install schema
 
-You can do this in different ways.  I used the `+ Get config.zip` button from the view server page at `/admin/config/search/search-api/server/ddev` to download a `config.zip` file. I copied the unzipped files into `.ddev\solr\configsets\selwyn`.  
+You can do this in different ways. The easiest way is to use the `+Upload Configset` button on the server page. Ignore the error message saying: `No existing configset name could be detected on the Solr server for this collection. That is fine if you are creating a new collection...` On the next screen, click the `Upload and create collection` button near the bottom of the screen.
+
+Alternatively, you can also use the `+ Get config.zip` button from the view server page at `/admin/config/search/search-api/server/ddev` to download a `config.zip` file. The contents of this file can be loaded by ddev on a restart. More below:
+
 ![Solr get config.zip](/images/solr-get-config.png)
 
-These were my files:
+
+I copied the unzipped files into `.ddev\solr\configsets\selwyn`.  These were my files:
 ```
 accents_en.txt                   protwords_en.txt                 schema_extra_fields.xml          solrconfig_extra.xml             solrconfig_requestdispatcher.xml stopwords_und.txt
 accents_und.txt                  protwords_und.txt                schema_extra_types.xml           solrconfig_index.xml             solrcore.properties              synonyms_en.txt
 elevate.xml                      schema.xml                       solrconfig.xml                   solrconfig_query.xml             stopwords_en.txt                 synonyms_und.txt
 ```
 
-
 Restarting ddev with `ddev restart` will make the new schema available to the solr server.
-It looks like you can also may also be able to use the `+Upload Configset` button on the server page also. (See the image above.)
+
 
 It seems like if you use a different directory name to copy the unzipped `config.zip` file i.e. use `fred` instead of `selwyn` DDEV will create a collection called `fred`. In the solr, ui, you should be able to see the collection name in the left-hand column.
 
