@@ -456,16 +456,19 @@ If you’re using SMTP for outgoing mail—with Symfony Mailer or SMTP modules, 
 [Read more in the DDEV docs](https://ddev.readthedocs.io/en/latest/users/usage/developer-tools/#email-capture-and-review-mailpit)
 
 
-### Solr
+### Solr and DDEV
 
 Many sites require Solr for search. You can add Solr to your DDEV project but it has some complexities.  Here is a way to get it set up.
 
 ```sh
-ddev get ddev/ddev-solr
+# For DDEV v1.23.5 or above run
+ddev add-on get ddev/ddev-solr
+# For earlier versions use:
+#ddev get ddev/ddev-solr
 ddev restart
 ```
 
-To use the latest version of solr (currently ver 9.x), you should add a `.ddev/docker-compose.solr_extra.yml` to override the image: 
+If you don't see the latest version of solr (currently ver 9.6.1), you could add a `.ddev/docker-compose.solr_extra.yml` to override the image: 
   
 ```yaml
 services: 
@@ -480,9 +483,9 @@ Once up and running, access Solr's admin UI within your browser by opening `http
 
 ![Solr Dashboard](/images/solr-dash.png)
 
-The admin UI is protected by basic authentication. The preconfigured admin account in security.json is user `solr` using the password `SolrRocks`.
+The admin UI is protected by basic authentication. The preconfigured admin account in `security.json` is user `solr` and the password `SolrRocks`.
 
-To access the Solr container from DDEV's web container, use `http://solr:8983`. 
+To access the Solr container from DDEV's web container (i.e. from within Drupal), use `http://solr:8983`.
 
 ::: tip Note
 Don't use `localhost` for the name of the solr server in your search api configuration. Use `solr` instead.
@@ -500,7 +503,7 @@ Usage: solr COMMAND OPTIONS
        where COMMAND is one of: start, stop, restart, status, healthcheck, create, create_core, create_collection, delete, version, zk, auth, assert, config, export, api, package, post, postlogs
 ```
 
-solr uses a program called `zookeeper` to manage some of the configuration of the solr server. 
+solr uses a program called `zookeeper` to manage some of the configuration of the solr server. This is abbreviated as `zk` in the commands.
 
 To access solr data, use the [Search API solr module](https://www.drupal.org/project/search_api_solr) along with the [Search API module](https://www.drupal.org/project/search_api).
 
