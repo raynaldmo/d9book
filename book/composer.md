@@ -105,11 +105,13 @@ For more, see [Making a patch](https://www.drupal.org/node/707484).
 
 Patches can be applied by referencing them in the composer.json file, in the following format. [cweagans/composer-patches](https://github.com/cweagans/composer-patches) can then be used to apply the patches on any subsequent website builds.
 
+::: tip Note
 In order to install and manage patches using composer we need to require the "composer-patches" module: 
 
 ```
 composer require cweagans/composer-patches
 ```
+:::
 
 
 Examples of patches to core look like:
@@ -178,6 +180,14 @@ If the patch was not applied or throws an error which is quite common (because t
 composer update -vvv
 ```
 
+::: tip Note
+If you haven't already installed the [cweagans composer patches plugin](https://github.com/cweagans/composer-patches) use: 
+
+```
+composer require cweagans/composer-patches
+```
+:::
+
 ## Patches from a Gitlab merge request
 
 Use this technique **at your peril!** 
@@ -218,6 +228,7 @@ You should **not apply patches directly from Gitlab merge requests** for several
 1. When the new drupal.org is released, issues will be moved to gitlab. These file urls will stop working at some point, and if they do your project won't build. Be future proof, use local patches.
 2. New patches may be added to the merge request, and you won't know about them. They could be flawed or malicious which could break your site.
 3. Your composer install (or deployment) now depends on drupal.org. If you are building your site and drupal.org has a temporary outage, your deployment will fail.
+4. You are at the mercy of the patch author. They could change the patch at any time, and you won't know about it. This could introduce bad code and break your site.
 :::
 
 
@@ -249,6 +260,15 @@ To separate patches into a different file other than composer json add `"patches
     "patches-file": "patches/composer.patches.json"
 }
 ```
+
+::: tip Note
+If you haven't already installed the [cweagans composer patches plugin](https://github.com/cweagans/composer-patches) use: 
+
+```
+composer require cweagans/composer-patches
+```
+:::
+
 
 
 ### Troubleshoot Composer Patches
