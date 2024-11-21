@@ -108,6 +108,9 @@ symfony/phpunit-bridge ^6.4
 symfony/var-dumper ^6.4
 ```
 
+::: tip Note
+The `drupal/core-dev` package is intended for development and should not be used in production. Remove it with `ddev composer install --no-dev` before deploying to production.
+:::
 
 ### Install Admin Toolbar Module & Module Filter
 
@@ -157,7 +160,9 @@ Add the line below to include the `IS_DDEV_PROJECT` environment variable as the 
 putenv("IS_DDEV_PROJECT=true");
 ```
 
-After a `ddev drush cr` and perhaps a `ddev reload` you should be able to run drush on the host. e.g. `drush cst`.
+After a `ddev drush cr` and perhaps a `ddev restart` you should be able to run drush on the host. e.g. `drush cst`.
+
+If you see an error like: `PHP Fatal error:  Composer detected issues in your platform: Your Composer dependencies require a PHP version ">= 8.2.0". You are running 8.1.28. in /Users/selwyn/Sites/ddev104/vendor/composer/platform_check.php on line 24` this means your project might be using PHP 8.3 while you have PHP 8.1 installed on your mac globally. You can downgrade the PHP version in the project `config.yaml` or update your host (macOS) PHP version with `brew install php@8.3` and then `brew link --force --overwrite php@8.3` to make it the default PHP version. You can check the version with `php -v`.
 
 
 ### Set config sync directory
@@ -816,7 +821,7 @@ ddev stop --remove-data --omit-snapshot
 
 ## Local Solr setup with Search API Solr
 
-Follow these [steps to get solr installed with your ddev project](#solr) first. 
+If you haven't already added solr to your project, follow these [steps to get solr installed in your ddev project](#solr) first. 
 
 Solr Cloud is the \"modern\" way to run Solr.  There are other ways, but this is the setup we'll cover here.
 
@@ -863,6 +868,9 @@ Leave the default values for Advanced and Multi-site compatibility:
 ![Add server - Advanced and multi-site compatibility](/images/solr-server7.png)
 
 
+More at [Search API Solr module README](https://git.drupalcode.org/project/search_api_solr/-/blob/4.x/README.md)
+
+
 ### Install schema
 
 You can do this in different ways. The easiest way is to use the `+Upload Configset` button on the server page. Ignore the error message saying: `No existing configset name could be detected on the Solr server for this collection. That is fine if you are creating a new collection...` On the next screen, click the `Upload and create collection` button near the bottom of the screen.
@@ -886,6 +894,26 @@ It seems like if you use a different directory name to copy the unzipped `config
 
 ![Solr collections](/images/solr-collection-selwyn.png)
 
+Also
+![Solr collections another view](/images/solr-collection-selwyn2.png)
+
+
+More at [Search API Solr module README](https://git.drupalcode.org/project/search_api_solr/-/blob/4.x/README.md)
+
+
+### Delete the Solr collection
+
+You can delete the collection at any time using the `Delete collection` button in the Solr u.i. This will remove the collection from the solr server. You can easily put it back by using the `+Upload Configset` button on the server page as outlined above.  At this time (Nov 2024) the delete collection from the (Search API) view server page doesn't work.
+
+![Solr delete collection](/images/solr-collection-delete.png)
+
+
+### Query the Solr server
+You can query the Solr server directly the Solr u.i.  This will show you the raw data in the solr server.
+
+Select the `collections, then the `selwyn` collection in the left column. Using all defaults, click the `Execute Query` button and you'll see a list of JSON documents. 
+
+![Solr query](/images/solr-query.png)
 
 
 
@@ -894,13 +922,23 @@ It seems like if you use a different directory name to copy the unzipped `config
 At `/admin/config/search/search-api` click on the "Add index" button.
 
 
-Specify `Content` as the data source and the Bundles that you want indexed.  
+Specify `Content` as the data source and the Bundles (content types) that you want indexed.  
 Specify the languages.
 For the server, specify the server you created above. In our example, it is `ddev`.
 
 ![Add index1](/images/searchapi-index1.png)
 
-You 
+Enable the index
+
+Here are some suggestions for the index options
+
+![Search API Index options](/images/searchapi-index-options.png)
+
+Save the index.
+
+In the view index page, you can index the content by clicking the `Index now` button.  If it is grayed out, first use the `clear all indexed data` button.
+
+Your search index should now be ready to use.
 
 More at [Search API Solr module README](https://git.drupalcode.org/project/search_api_solr/-/blob/4.x/README.md)
 
@@ -1053,18 +1091,18 @@ parameters:
         - '#Unsafe usage of new static\(\)#'
 
 ```
-PHPStan has a number of levels that dictate what sort of things it will look for. Level 0, being the lowest level, looks for some basic checks like variables not being assigned and unknown classes being used. You can find the [full description of the different levels on the PHPStan website](https://phpstan.org/user-guide/rule-levels).
+PHPStan has a number of levels that dictate what sort of things it will look for. Level 0, being the lowest level, looks for some basic checks like variables not being assigned and unknown classes being used. You can find the [full description of the different levels on the PHPStan website](https://phpstan.org/user-guide/rule-levels):
 
->0 - basic checks, unknown classes, unknown functions, unknown methods called on $this, wrong number of arguments passed to those methods and functions, always undefined variables
->1 - possibly undefined variables, unknown magic methods and properties on classes with __call and __get
->2 - unknown methods checked on all expressions (not just $this), validating PHPDocs
->3 - return types, types assigned to properties
->4 - basic dead code checking - always false instanceof and other type checks, dead else branches, unreachable code after return; etc.
->5 - checking types of arguments passed to methods and functions
->6 - report missing typehints
->7 - report partially wrong union types - if you call a method that only exists on some types in a union type, level 7 starts to report that; other possibly incorrect situations
->8 - report calling methods and accessing properties on nullable types
->9 - be strict about the mixed type - the only allowed operation you can do with it is to pass it to another mixed
+* 0 - basic checks, unknown classes, unknown functions, unknown methods called on $this, wrong number of arguments passed to those methods and functions, always undefined variables
+* 1 - possibly undefined variables, unknown magic methods and properties on classes with __call and __get
+* 2 - unknown methods checked on all expressions (not just $this), validating PHPDocs
+  * 3 - return types, types assigned to properties
+* 4 - basic dead code checking - always false instanceof and other type checks, dead else branches, unreachable code after return; etc.
+* 5 - checking types of arguments passed to methods and functions
+* 6 - report missing typehints
+* 7 - report partially wrong union types - if you call a method that only exists on some types in a union type, level 7 starts to report that; other possibly incorrect situations
+* 8 - report calling methods and accessing properties on nullable types
+* 9 - be strict about the mixed type - the only allowed operation you can do with it is to pass it to another mixed
 
 
 ### Running PHPStan
