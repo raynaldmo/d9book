@@ -433,6 +433,34 @@ alias l="ls -lhAp"
 
 Note. Be sure to restart the container with `ddev restart` to see the changes. Don\'t use `.homeadditions` - use the `homeadditions` with no period (or full stop) in front.
 
+
+### Post start or post import hooks
+
+You can run a script after the container starts or after the database is imported. This is useful for doing some last minute setup or creating required directories etc. For example, you can run a script to enable modules, set up configuration, or run drush commands.
+
+Here are some examples that you can add to your `.ddev/config.yaml` file:
+
+```yaml
+# 6-11-24: Node ver 16, import docksal config split, add packages.
+hooks:
+  post-start:
+    - exec: nvm install 16
+    - exec: drush config-split:import docksal -y
+#    - exec: cd /var/www/html/web/themes/custom/uddd && npm install
+  post-import-db:
+    - exec: drush config-split:import docksal -y
+```
+
+or
+  
+```yaml
+# Create local private files dir.
+hooks:
+  post-start:
+    - exec: mkdir -p /var/www/html/docroot/sites/default/files/private
+```
+
+
 ### Upgrading DDEV
 
 After you install a new version of ddev, run `ddev stop` and then `ddev config` to reconfigure things for your project. Just press enter for all the questions. It keeps things rolling smoothly. Run `ddev start` to start it all back up again. 
@@ -825,8 +853,9 @@ If you haven't already added solr to your project, follow these [steps to get so
 
 Solr Cloud is the \"modern\" way to run Solr.  There are other ways, but this is the setup we'll cover here.
 
-Starting from Search API Solr module version 4.2.1 you don't need to deal with configsets manually anymore. You can enable the `search_api_solr_admin` sub-module which is part of the [Search API Solr module](https://www.drupal.org/project/search_api_solr). Now you create or update your "collections" at any time by clicking the "Upload Configset" button on the Search API server details page (see installation steps below), or use drush to do this with
+Starting from Search API Solr module version 4.2.1 you don't need to deal with configsets manually anymore. You can enable the `search_api_solr_admin` sub-module which is part of the [Search API Solr module](https://www.drupal.org/project/search_api_solr). Now you create or update your "collections" at any time by clicking the "Upload Configset" button on the Search API server details page (see installation steps below). 
 
+It is also possible to use drush to do this:
 
 ```sh
 ddev drush --numShards=1 search-api-solr:upload-configset SEARCH_API_SERVER_ID
