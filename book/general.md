@@ -2255,6 +2255,104 @@ function abc_search_search_api_solr_documents_alter(array &$documents, \Drupal\s
 }
 ```
 
+## Custom edit permissions per user
+
+Here is a quick little module I cobbled together to allow an admin to tag a node with a term, the user would have the same term.  This allows the user to edit that node even if they don't have permissions to do so via normal Drupal channels.  
+
+This requires a few things:
+1. A vocabulary called `wecc_edit_access`
+2. A field on the node called `field_wecc_edit_access` that is a term reference to the `wecc_edit_access` vocabulary.
+3. A field on the user called `field_wecc_user_edit_access` that is a term reference to the `wecc_edit_access` vocabulary.
+
+Then the following code in `web/modules/custom/wecc_node_access/wecc_node_access.module`:
+
+```php
+<?php
+
+/**
+ * @file
+ * Primary module hooks for WECC Node Access module.
+ */
+
+
+use Drupal\Core\Session\AccountInterface;
+use Drupal\node\NodeInterface;
+use Drupal\Core\Access\AccessResult;
+use \Drupal\user\Entity\User;
+use \Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_node_access().
+ */
+function wecc_node_access_node_access(NodeInterface $node, $op, AccountInterface $account): AccessResult {
+  $type = $node->bundle();
+  if ($type !== 'page') {
+    return AccessResult::neutral();
+  }
+
+  if ($op == 'update') {
+    // Load term id from field field_wecc_edit_access.
+    $node_edit_access_tid = $node->get('field_wecc_edit_access')->target_id;
+    if (is_null($node_edit_access_tid)) {
+      return AccessResult::neutral()->addCacheableDependency($node);
+    }
+
+    // load the field_wecc_user_edit_access from the user.
+    $user = User::load($account->id());
+    // load all the values from the field field_wecc_user_edit_access.
+    $user_edit_access_tids = $user->get('field_wecc_user_edit_access')->getValue();
+    if (empty($user_edit_access_tids)) {
+      return AccessResult::neutral()->addCacheableDependency($user);
+    }
+
+    // Check if user has role 'content_editor'.
+    if (!$account->hasRole('content_editor')) {
+      return AccessResult::neutral()->addCacheContexts(['user.roles']);
+    }
+
+    // Build an array of the term ids stored in the field field_wecc_user_edit_access.
+    $user_tids = [];
+    foreach ($user_edit_access_tids as $user_edit_access_tid) {
+      $user_tids[] = $user_edit_access_tid['target_id'];
+    }
+    if (in_array($node_edit_access_tid, $user_tids)) {
+      return AccessResult::allowed()->addCacheableDependency($node)->addCacheableDependency($user);
+
+    }
+  }
+  return AccessResult::neutral()->addCacheableDependency($node);
+}
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function wecc_node_access_form_alter(&$form,FormStateInterface $form_state, $form_id)
+{
+ // Modify form to hide field field_wecc_edit_access if user does not have role 'admin'.
+  $user = \Drupal::currentUser();
+  if (!$user->hasRole('administrator')) {
+    if (isset($form['field_wecc_edit_access'])) {
+      $form['field_wecc_edit_access']['#access'] = FALSE;
+    }
+  }
+}
+```
+
+Finally the `web/modules/custom/wecc_node_access/wecc_node_access.info.yml` file:
+
+```yaml
+name: 'WECC Node Access'
+type: module
+description: 'Control edit permissions for certain nodes'
+package: WECC
+core_version_requirement: ^10 || ^11
+```
+
+To use this, add a term such as `Department 1` to the `wecc_edit_access` vocabulary.  Then add this term to the `field_wecc_edit_access` field on the node you want to restrict access to.  Then add the same term to the `field_wecc_user_edit_access` field on the user you want to have access to the node.  When the user does a content listing, they will see the node and be able to edit it. This also handles caching, so any changes to the terms on the node or the user are immediately reflected when the user lists the content. This will also hide the `field_wecc_edit_access` field from the user if they don't have the `administrator` role so they can't change their access permission.
+
+
+
 ## Attach a library to all forms
 
 Use `hook_form_alter()` to attach a custom library to all forms. This is useful when you want to include custom JavaScript or CSS files on all forms. In this example, the `abc_search` library is attached to all forms.
