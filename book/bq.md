@@ -671,7 +671,95 @@ It includes:
 * Batch builder to create batch array definitions
 * Drush generate commands to quickly whip-up new operations and finished operations
 
-Check out the [README.md file](https://git.drupalcode.org/project/batch/-/blob/2.0.x/README.md) for more information. Also of interest in this module is some interesting code that is used to try to recover memory when running a batch operation.
+Check out the [README.md file](https://git.drupalcode.org/project/batch/-/blob/2.0.x/README.md) for more information. 
+
+Code to use this module looks like this:
+
+
+
+```php
+
+<?php
+
+namespace Drupal\my_module\Batch\Operation;
+
+use Drupal\batch\Batch\Operation\EnumeratedOperationBase;
+
+/**
+ * Batch operation for my batch.
+ */
+class MyOperation extends EnumeratedOperationBase {
+
+  /**
+   * {@inheritdoc}
+   */
+  public function processItem(mixed $item, array &$context): void {
+    // Load a node using $item as the node ID.
+    $node = $this->getEntityTypeManager()->getStorage('node')->load($item);
+    if (!$node) {
+      // If for some reason we cannot load the node, there's nothing to do.
+      $this->getLogger('my_module')
+        ->info('Unable to load node %nid.', ['%nid' => $item]);
+      return;
+    }
+
+    // Do some work with it, save it.
+    $node->setTitle('Updated by batch');
+    $node->save();
+
+    // Log it.
+    $context = [
+      '%nid' => $item,
+      'link' => $node->toLink($this->t('View'))->toString(),
+    ];
+    $this->getLogger('my_module')
+      ->info('Processed node %nid.', $context);
+  }
+
+}
+```
+
+Create the batch and call it from a form submit:
+
+```php 
+  public function submit() {
+    // Query node IDs for content that hasn't been updated within an hour.
+    $query =\Drupal::entityTypeManager()
+      ->getStorage('node')
+      ->getQuery();
+    $query->condition('updated', time() - 3600, '<');
+    $nids = $query->accessCheck(FALSE)->execute();
+
+    // Create the operation and the batch.
+    $operation = new MyOperation($ids);
+    $batch = new BatchBuilder();
+    $batch->addBatchOperation($operation);
+
+    // Set the batch to run.
+    batch_set($batch->toArray());
+  }
+```
+Or execute it via drush:
+
+```php
+<?php
+
+// Create the operation and the batch.
+$operation = new MyOperation($ids);
+$batch = new BatchBuilder();
+$batch->addBatchOperation($operation);
+
+// Set the batch to run.
+batch_set($batch->toArray());
+$batch =& batch_get();
+$batch['progressive'] = FALSE;
+
+// Process the batch.
+drush_backend_batch_process();
+```
+
+
+Also of interest in this module is some interesting code that is used to try to recover memory when running a batch operation.
 
 From `docroot/modules/contrib/batch/src/Batch/Operation/OperationBase.php`:
 
