@@ -660,6 +660,61 @@ if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
 }
 ```
 
+### The Batch API contrib module
+
+There is a [Batch API contrib module](https://www.drupal.org/project/batch) which provides some interesting options that may be worth checking out.
+
+It includes:
+
+* Base classes for creating operations
+* Default/base class for finished operations
+* Batch builder to create batch array definitions
+* Drush generate commands to quickly whip-up new operations and finished operations
+
+Check out the [README.md file](https://git.drupalcode.org/project/batch/-/blob/2.0.x/README.md) for more information. Also of interest in this module is some interesting code that is used to try to recover memory when running a batch operation.
+
+From `docroot/modules/contrib/batch/src/Batch/Operation/OperationBase.php`:
+
+```php
+  /**
+   * Reclaims memory.
+   *
+   * @return bool
+   *   Indicates if memory was reclaimed.
+   *
+   * @see \Drupal\migrate\MigrateExecutable::attemptMemoryReclaim
+   */
+  protected function reclaimMemory(): bool {
+    $limit = trim(ini_get('memory_limit'));
+    if ($limit == '-1') {
+      $limit = Bytes::toNumber('256MB');
+    }
+    else {
+      $limit = Bytes::toNumber($limit);
+    }
+    if (memory_get_usage() / $limit < .85) {
+      return FALSE;
+    }
+
+    drupal_static_reset();
+
+    // Entity storage can blow up with caches so clear them out.
+    foreach ($this->getEntityTypeManager()->getDefinitions() as $id => $definition) {
+      $this->getEntityTypeManager()->getStorage($id)->resetCache();
+    }
+
+    // Clear the entity storage memory cache.
+    /** @var \Drupal\Core\Cache\MemoryCache\MemoryCache $memory_cache */
+    $this->getEntityMemoryCache()->deleteAll();
+
+    // Run garbage collector to further reduce memory.
+    gc_collect_cycles();
+    return TRUE;
+  }
+```
+
+
+
 ## Queue System
 
 From [Alan Saunders article, December 2021](https://www.alansaunders.co.uk/blog/queues-drupal-8-and-9):
