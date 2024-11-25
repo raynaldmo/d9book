@@ -579,6 +579,8 @@ e.g
 - check use path mappings
 - for docroot specify: /var/www/html/docroot (i.e. wherever index.php is)
 
+For Lando, check out: [How to configure xdebug with Lando & VS code for Drupal Development - Apr 2023](https://thehigglers.com/blogs/how-to-configure-xdebug-with-lando-for-drupal-development/) also [Lando + PHPStorm + Xdebug in the Lando docs - Updated Nov 2023](https://docs.lando.dev/guides/lando-phpstorm.html)
+
 
 ### Command line or drush debugging
 
@@ -1010,6 +1012,9 @@ Make sure PHPStorm is listening by clicking the listen button
 
 When you try again it will be recreated but you will probably need to specify the path (from the image above).
 
+For Lando, check out: [How to configure xdebug with Lando & VS code for Drupal Development - Apr 2023](https://thehigglers.com/blogs/how-to-configure-xdebug-with-lando-for-drupal-development/) also [Lando + PHPStorm + Xdebug in the Lando docs - Updated Nov 2023](https://docs.lando.dev/guides/lando-phpstorm.html)
+
+
 
 #### add a breakpoint in code
 
@@ -1045,7 +1050,7 @@ When you need to see the values of variables in your twig templates, simply enab
 
 This will cause xdebug to stop in `docroot/modules/contrib/devel/src/Twig/Extension/Debug.php` at the `breakpoint()` function.  You can then easily look in the `$context` variable which holds everything that is available in the twig template. 
 
-Apparently PHPStorm has the ability to step through twig templates just like PHP code. See this [Jetbrains blog post on Twig debug support](https://www.jetbrains.com/help/phpstorm/twig.html#debugging-twig-templates) for details. There is also a [Twig Xdebug contrib module](https://www.drupal.org/project/twig_xdebug).
+PHPStorm has the ability to step through twig templates just like PHP code. See this [Jetbrains blog post on Twig debug support](https://www.jetbrains.com/help/phpstorm/twig.html#debugging-twig-templates) for details. There is also a [Twig Xdebug contrib module](https://www.drupal.org/project/twig_xdebug).
 
 ![Xdebug in twig](/images/twig-xdebug.png)
 
