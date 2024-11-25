@@ -2329,7 +2329,7 @@ function wecc_node_access_node_access(NodeInterface $node, $op, AccountInterface
  */
 function wecc_node_access_form_alter(&$form,FormStateInterface $form_state, $form_id)
 {
- // Modify form to hide field field_wecc_edit_access if user does not have role 'admin'.
+ // Modify form to hide field field_wecc_edit_access if user does not have role 'administrator'.
   $user = \Drupal::currentUser();
   if (!$user->hasRole('administrator')) {
     if (isset($form['field_wecc_edit_access'])) {
