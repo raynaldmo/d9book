@@ -103,7 +103,7 @@ For more, see [Making a patch](https://www.drupal.org/node/707484).
 
 ## Patch modules using patches on Drupal.org
 
-Patches can be applied by referencing them in the composer.json file, in the following format. [cweagans/composer-patches](https://github.com/cweagans/composer-patches) can then be used to apply the patches on any subsequent website builds.
+Patches can be applied by referencing them in the `composer.json` file, in the following format. Use the [cweagans composer-patches project from github](https://github.com/cweagans/composer-patches) to apply patches on any subsequent website builds.
 
 ::: tip Note
 In order to install and manage patches using composer we need to require the "composer-patches" module: 
@@ -886,6 +886,100 @@ In your composer.json, you can specify the minimum stability by doing the follow
 For more:
 - [freecodecamp.org](https://www.freecodecamp.org/news/what-is-minimum-stability-in-composer/)
 - [getcomposer.org](https://getcomposer.org/doc/04-schema.md#minimum-stability)
+
+
+
+## Including a git repo in composer.json
+
+When you want to include a repo in your project that does not define anything about itself with a `composer.json` file you must define it in your own `composer.json`. See the example:
+
+```json
+{
+  "name": "mynamespace/my-project-that-uses-composer",
+  "repositories": [
+    {
+      "type": "package",
+      "package": {
+        "name": "mynamespace/my-custom-theme",
+        "version": "1.2.3",
+        "type": "drupal-theme",
+        "source": {
+          "url": "https://github.com/mynamespace/my-custom-theme.git",
+          "type": "git",
+          "reference": "master"
+        }
+      }
+    }
+  ],
+  "require": {
+    "mynamespace/my-custom-theme": "^1",
+    "composer/installers": "^2.0"
+  }
+}
+```
+
+More at [Use Composer to require Git repositories within PHP projects - May 2022](https://opensource.com/article/22/5/composer-git-repositories)
+
+
+Here is a real example from a Drupal project where `desandro/masonry` and `desandro/imagesloaded` are defined as packages in the `composer.json` file and then required in the `require` section:
+
+```json
+{
+    "name": "wcc/wcc-website",
+    "description": "Drupal website.",
+    "type": "project",
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://www.drupal.org/project/drupal",
+    "support": {
+        "docs": "https://www.drupal.org/docs/user_guide/en/index.html",
+        "chat": "https://www.drupal.org/node/314178"
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "desandro/imagesloaded",
+                "version": "1.0",
+                "type": "drupal-library",
+                "source": {
+                    "url": "https://github.com/desandro/imagesloaded",
+                    "type": "git",
+                    "reference": "master"
+                },
+                "license": "MIT"
+            }
+        },
+        {
+            "type": "package",
+            "package": {
+                "name": "desandro/masonry",
+                "version": "1.0",
+                "type": "drupal-library",
+                "source": {
+                    "url": "https://github.com/desandro/masonry",
+                    "type": "git",
+                    "reference": "master"
+                },
+                "license": "MIT"
+            }
+        }
+    ],
+    "require": {
+        "acquia/drupal-environment-detector": "^1.6",
+        "composer/installers": "^2.0",
+        "cweagans/composer-patches": "^1.7",
+        "desandro/imagesloaded": "^1.0",
+        "desandro/masonry": "^1.0",
+        "drupal/accordion_blocks": "^2.0",
+        "drupal/acquia_search": "^3.1",
+        "drupal/addtocal_augment": "^1.1",
+        ...
+```
+
 
 
 
