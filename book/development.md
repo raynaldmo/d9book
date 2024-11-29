@@ -501,7 +501,7 @@ ddev add-on get ddev/ddev-solr
 ddev restart
 ```
 
-If you don't see the latest version of solr (currently ver 9.6.1), you could add a `.ddev/docker-compose.solr_extra.yml` to override the image: 
+If you don't see the latest version of solr (currently ver 9.6.1), you could add a `.ddev/docker-compose.solr_extra.yml` to override the image. This step was not necessary for my setup but it may be useful for customization: 
   
 ```yaml
 services: 
@@ -527,6 +527,8 @@ Don't use `localhost` for the name of the solr server in your search api configu
 
 More at the [ddev-solr repo](https://github.com/ddev/ddev-solr)
 
+To use the solr data for searching your Drupal site, use the [Search API solr module](https://www.drupal.org/project/search_api_solr) and  the [Search API module](https://www.drupal.org/project/search_api).  Detailed setup instructions below at [Local Solr setup with Search API](#local-solr-setup-with-search-api-solr)
+
 
 DDEV provides some command line tools to help you manage your Solr instance. You can see the available commands by running `ddev solr`:
 
@@ -536,9 +538,8 @@ Usage: solr COMMAND OPTIONS
        where COMMAND is one of: start, stop, restart, status, healthcheck, create, create_core, create_collection, delete, version, zk, auth, assert, config, export, api, package, post, postlogs
 ```
 
-solr uses a program called `zookeeper` to manage some of the configuration of the solr server. This is abbreviated as `zk` in the commands.
+Solr uses a program called `zookeeper` to manage some of the configuration of the solr server. This is abbreviated as `zk` in the commands.
 
-To access solr data, use the [Search API solr module](https://www.drupal.org/project/search_api_solr) along with the [Search API module](https://www.drupal.org/project/search_api).
 
 
 
@@ -853,9 +854,9 @@ ddev stop --remove-data --omit-snapshot
 
 If you haven't already added solr to your project, follow these [steps to get solr installed in your ddev project](#solr) first. 
 
-Solr Cloud is the \"modern\" way to run Solr.  There are other ways, but this is the setup we'll cover here.
+Solr Cloud is the \"modern\" (and simplest) way to run Solr.  There are other ways, but this is the setup we'll cover here.
 
-Starting from Search API Solr module version 4.2.1 you don't need to deal with configsets manually anymore. You can enable the `search_api_solr_admin` sub-module which is part of the [Search API Solr module](https://www.drupal.org/project/search_api_solr). Now you create or update your "collections" at any time by clicking the "Upload Configset" button on the Search API server details page (see installation steps below). 
+Starting from Search API Solr module version 4.2.1 you don't need to deal with collections or configsets manually anymore. You can enable the `search_api_solr_admin` submodule which is part of the [Search API Solr module](https://www.drupal.org/project/search_api_solr). Now you create or update your \"collections\" at any time by clicking the "Upload Configset" button on the Search API server details page (see installation steps below). 
 
 It is also possible to use drush to do this:
 
