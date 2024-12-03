@@ -63,6 +63,8 @@ export default defineConfig({
         'attribution.md',
         'mysteries.md',
         'contribute.md',
+        'layoutbuilder.md',
+        'decoupled.md'
       ],
     }),
 

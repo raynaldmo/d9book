@@ -75,11 +75,10 @@ features:
     details: Debugging with PhpStorm, DDEV and Xdebug
     link: /debugging
 
-  - icon: 💔
-    title: Decoupled Drupal
-    details: REST API, GraphQL, JSONAPI
-    link: /decoupled
-
+  # - icon: 💔
+  #   title: Decoupled Drupal
+  #   details: REST API, GraphQL, JSONAPI
+  #   link: /decoupled
 
   - icon: 👩‍💻
     title: Development
@@ -131,10 +130,10 @@ features:
     details: Using Javascript in Drupal
     link: /javascript
 
-  - icon: 🏋🏽‍♂️
-    title: Layout Builder
-    details: Building layouts with the Layout Builder
-    link: /layoutbuilder
+  # - icon: 🏋🏽‍♂️
+  #   title: Layout Builder
+  #   details: Building layouts with the Layout Builder
+  #   link: /layoutbuilder
 
   - icon: 🎓
     title: Learning
