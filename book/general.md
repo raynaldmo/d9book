@@ -2352,6 +2352,80 @@ core_version_requirement: ^10 || ^11
 To use this, add a term such as `Department 1` to the `wecc_edit_access` vocabulary.  Then add this term to the `field_wecc_edit_access` field on the node you want to restrict access to.  Then add the same term to the `field_wecc_user_edit_access` field on the user you want to have access to the node.  When the user does a content listing, they will see the node and be able to edit it. This also handles caching, so any changes to the terms on the node or the user are immediately reflected when the user lists the content. This will also hide the `field_wecc_edit_access` field from the user if they don't have the `administrator` role so they can't change their access permission.
 
 
+To rather use a role to control access, there could rather be a field: `field_role_access` added to the node which is a reference field to `roles`. Then you could specify the role(s) that permit editing the node. The code would look like this:
+
+```php
+<?php
+
+/**
+ * @file
+ * Primary module hooks for WECC Node Access module.
+ */
+
+
+use Drupal\Core\Session\AccountInterface;
+use Drupal\node\NodeInterface;
+use Drupal\Core\Access\AccessResult;
+use \Drupal\user\Entity\User;
+use \Drupal\Core\Form\FormStateInterface;
+
+/**
+ * Implements hook_node_access().
+ */
+function wecc_node_access_node_access(NodeInterface $node, $op, AccountInterface $account): AccessResult {
+  $type = $node->bundle();
+  if ($type !== 'page') {
+    return AccessResult::neutral();
+  }
+
+  if ($op == 'update') {
+    // Check if user has role 'content_editor'.
+    if (!$account->hasRole('content_editor')) {
+      return AccessResult::neutral()->addCacheableDependency($node);
+    }
+    // load the values in field_role_access.
+    $node_edit_access_roles = $node->get('field_role_access')->target_id;
+    if (empty($node_edit_access_roles)) {
+      return AccessResult::neutral()->addCacheableDependency($node);
+    }
+    if (is_string($node_edit_access_roles)) {
+      $node_edit_access_roles = [$node_edit_access_roles];
+    }
+    // Get the user's roles
+    $user = User::load($account->id());
+    $user_roles = $user->getRoles();
+    if (is_string($user_roles)) {
+      $user_role_ids = [$user_roles];
+    }
+
+    // Check if there is an intersection of roles between the user and the node.
+    if (array_intersect($node_edit_access_roles, $user_roles)) {
+      return AccessResult::allowed()
+        ->addCacheableDependency($node)
+        ->addCacheableDependency($user);
+    }
+  }
+
+  return AccessResult::neutral()->addCacheableDependency($node);
+}
+
+
+/**
+ * Implements hook_form_alter().
+ */
+function wecc_node_access_form_alter(&$form,FormStateInterface $form_state, $form_id)
+{
+ // Hide field field_role_access if user does not have role 'admin' so normal users can't change it and gain edit access.
+  $user = \Drupal::currentUser();
+  if (!$user->hasRole('administrator')) {
+    if (isset($form['field_role_access'])) {
+      $form['field_role_access']['#access'] = FALSE;
+    }
+  }
+}
+```
+
+
 
 ## Attach a library to all forms
 
