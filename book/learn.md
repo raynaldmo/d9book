@@ -29,6 +29,7 @@ There are many books about Drupal that are worth reading.
 - [Check out some older Drupal books from Packt publishing](https://subscription.packtpub.com/search?query=Drupal)
 - [Drupal Book.org is an online only book by Ivan.  Updated Sep 2018. While it is not complete, it is a nicely formatted valuable resource](https://drupalbook.org/)
 - [Drupal 8 Theming with Twig by Chaz Chumley Published in March 2016](https://amzn.to/3MzPrly)
+- [Drupal 10+ Theming - How to convert an HTML template to a Drupal Theme](https://drupal10plustheming.com/)
 
 ::: tip Please note
 Some of these are affiliate links so Amazon may send me some money if you purchase items using these links.
